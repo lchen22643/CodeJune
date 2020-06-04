@@ -3,6 +3,7 @@ import java.util.*;
 class ListNode {
     public int key;
     public int val;
+	public int count;
     public ListNode next;
     public ListNode pre;
     
@@ -24,11 +25,13 @@ class DList {
         }
         ListNode pre = node.pre;
         ListNode next = node.next;
+		// 如果当前节点为 head, 更新 head
         if(pre != null){
             pre.next = next;
         } else {
             head = node.next;
         }
+		// 如果当前节点为 tail, 更新 tail
         if(next != null){
             next.pre = pre;
         } else {
@@ -40,6 +43,7 @@ class DList {
         return node;
     }
     public void addToTail(ListNode node){
+		    // 如果 tail 为空， 同时更新 tail 和 head
             if(this.tail == null){
                 this.tail = node;
                 this.head = node;
@@ -58,16 +62,15 @@ class DList {
 	}
 }
 public class LFUCache {
-    HashMap<Integer, ListNode> vals;
-    HashMap<Integer, Integer> counts;
-    HashMap<Integer, DList> lists;
+    Map<Integer, ListNode> vals;
+    Map<Integer, DList> lists;
     int cap;
     int min = -1;
     public LFUCache(int capacity) {
         cap = capacity;
         vals = new HashMap<>();
-        counts = new HashMap<>();
         lists = new HashMap<>();
+		// make sure every count has a list
         lists.put(1, new DList());
     }
     
@@ -79,12 +82,14 @@ public class LFUCache {
     }
 
 	private void updateFreq(int key){
-		int count = counts.get(key);
-        counts.put(key, count+1);
+		
 		ListNode node = vals.get(key);
+		// 更新对应 key 的 frequency
+		int count = node.count;
+        node.count ++;
         node = lists.get(count).rmNode(node);
-		// 如果当前缓存为最小freq, 且无重复值
-	    // 更新最小freq
+		// 如果当前缓存为最小 freq, 且无重复值
+	    // 更新最小 freq
         if(count==min && lists.get(count).size()==0)
             min ++;
 		// 
@@ -102,19 +107,16 @@ public class LFUCache {
             return;
         } 
         if(vals.size() >= cap) {
-			//System.out.println("min list size is : " + lists.get(min).size());
             ListNode evit = lists.get(min).removeHead();
-			/*System.out.println(min);
-			System.out.println(evit);
-			System.out.println(evit.key);*/
 			if(vals.containsKey(evit.key)){
                vals.remove(evit.key);
 			}
           
         }
 		ListNode node = new ListNode(key, value);
+		node.count = 1;
         vals.put(key, node);
-        counts.put(key, 1);
+        
         min = 1;
         lists.get(1).addToTail(node);
     }
@@ -125,103 +127,103 @@ public class LFUCache {
 		obj.put(6,11);
 		obj.put(10,5);
 		obj.put(9,10);
-		obj.get(13);
+		System.out.println(obj.get(13));
 		obj.put(2,19);
-		obj.get(2);
-		obj.get(3);
+		System.out.println(obj.get(2));
+		System.out.println(obj.get(3));
 		obj.put(5,25);
-		obj.get(8);
+		System.out.println(obj.get(8));
 		obj.put(9,22);
 		obj.put(5,5);
 		obj.put(1,30);
-		obj.get(11);
+		System.out.println(obj.get(11));
 		obj.put(9,12);
-		obj.get(7);
-		obj.get(5);
-		obj.get(8);
-		obj.get(9);
+		System.out.println(obj.get(7));
+		System.out.println(obj.get(5));
+		System.out.println(obj.get(8));
+		System.out.println(obj.get(9));
 		obj.put(4,30);
 		obj.put(9,3);
-		obj.get(9);
-		obj.get(10);
-		obj.get(10);
+		System.out.println(obj.get(9));
+		System.out.println(obj.get(10));
+		System.out.println(obj.get(10));
 		obj.put(6,14);
 		obj.put(3,1);
-		obj.get(3);
+		System.out.println(obj.get(3));
 		obj.put(10,11);
-		obj.get(8);
+		System.out.println(obj.get(8));
 		obj.put(2,14);
-		obj.get(1);
-		obj.get(5);
-		obj.get(4);
+		System.out.println(obj.get(1));
+		System.out.println(obj.get(5));
+		System.out.println(obj.get(4));
 		obj.put(11,4);
 		obj.put(12,24);
 		obj.put(5,18);
-		obj.get(13);
+		System.out.println(obj.get(13));
 		obj.put(7,23);
-		obj.get(8);
-		obj.get(12);
+		System.out.println(obj.get(8));
+		System.out.println(obj.get(12));
 		obj.put(3,27);
 		obj.put(2,12);
-		obj.get(5);
+		System.out.println(obj.get(5));
 		obj.put(2,9);
 		obj.put(13,4);
 		obj.put(8,18);
 		obj.put(1,7);
-		obj.get(6);
+		System.out.println(obj.get(6));
 		obj.put(9,29);
 		obj.put(8,21);
-		obj.get(5);
+		System.out.println(obj.get(5));
 		obj.put(6,30);
 		obj.put(1,12);
-		obj.get(10);
+		System.out.println(obj.get(10));
 		obj.put(4,15);
 		obj.put(7,22);
 		obj.put(11,26);
 		obj.put(8,17);
 		obj.put(9,29);
-		obj.get(5);
+		System.out.println(obj.get(5));
 		obj.put(3,4);
 		obj.put(11,30);
-		obj.get(12);
+		System.out.println(obj.get(12));
 		obj.put(4,29);
-		obj.get(3);
-		obj.get(9);
-		obj.get(6);
+		System.out.println(obj.get(3));
+		System.out.println(obj.get(9));
+		System.out.println(obj.get(6));
 		obj.put(3,4);
-		obj.get(1);
-		obj.get(10);
+		System.out.println(obj.get(1));
+		System.out.println(obj.get(10));
 		obj.put(3,29);
 		obj.put(10,28);
 		obj.put(1,20);
 		obj.put(11,13);
-		obj.get(3);
+		System.out.println(obj.get(3));
 		obj.put(3,12);
 		obj.put(3,8);
 		obj.put(10,9);
 		obj.put(3,26);
-		obj.get(8);
-		obj.get(7);
-		obj.get(5);
+		System.out.println(obj.get(8));
+		System.out.println(obj.get(7));
+		System.out.println(obj.get(5));
 		obj.put(13,17);
 		obj.put(2,27);
 		obj.put(11,15);
-		obj.get(12);
+		System.out.println(obj.get(12));
 		obj.put(9,19);
 		obj.put(2,15);
 		obj.put(3,16);
-		obj.get(1);
+		System.out.println(obj.get(1));
 		obj.put(12,17);
 		obj.put(9,1);
 		obj.put(6,19);
-		obj.get(4);
-		obj.get(5);
-		obj.get(5);
+		System.out.println(obj.get(4));
+		System.out.println(obj.get(5));
+		System.out.println(obj.get(5));
 		obj.put(8,1);
 		obj.put(11,7);
 		obj.put(5,2);
 		obj.put(9,28);
-		obj.get(1);
+		System.out.println(obj.get(1));
 		obj.put(2,2);
 		obj.put(7,4);
 		obj.put(4,22);
