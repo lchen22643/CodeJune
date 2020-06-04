@@ -14,18 +14,11 @@ public class MedianFinder {
     
     public void addNum(int num) {
         if(leftQ.size() == rightQ.size()){
-            leftQ.add(num);
-        } else {
             rightQ.add(num);
-        }
-        if(leftQ.size() == 0 || rightQ.size() == 0){
-            return;
-        }
-        while(leftQ.peek() > rightQ.peek()){
-            int left = leftQ.poll();
-            int right = rightQ.poll();
-            leftQ.add(right);
-            rightQ.add(left);
+            leftQ.add(rightQ.poll());
+        } else {
+            leftQ.add(num);
+            rightQ.add(leftQ.poll());
         }
     }
     
