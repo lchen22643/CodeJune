@@ -1,151 +1,161 @@
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
-class ListNode{
-    int key, value;
+
+class ListNode {
+	int key, value;
 	ListNode next;
 	long timestamp;
-    public ListNode(int key, int value){
-        this.key = key;
-        this.value = value;
+
+	public ListNode(int key, int value) {
+		this.key = key;
+		this.value = value;
 		this.next = null;
 		timestamp = System.currentTimeMillis();
-    }
+	}
 }
-class ClearCacheThread extends Thread{
+
+class ClearCacheThread extends Thread {
 	LRUCache cache;
 	long expireTime;
 	int n;
-	public ClearCacheThread(LRUCache cache, long expireTime, int n){
+
+	public ClearCacheThread(LRUCache cache, long expireTime, int n) {
 		this.cache = cache;
 		this.expireTime = expireTime;
 		this.n = n;
 	}
+
 	@Override
-	public void run(){
+	public void run() {
 		try {
-            while(true){
+			while (true) {
 				sleep(n * expireTime);
 				cache.clearCache();
-		    }
-		} catch(InterruptedException ex){
-                ex.printStackTrace();
+			}
+		} catch (InterruptedException ex) {
+			ex.printStackTrace();
 		}
-		
+
 	}
 }
+
 public class LRUCache {
-    /*
-    * @param capacity: An integer
-    
-    */
-   
-    ListNode dummy, tail;
-    
-    int capacity, size;
+	/*
+	 * @param capacity: An integer
+	 * 
+	 */
+
+	ListNode dummy, tail;
+
+	int capacity, size;
 	Map<Integer, ListNode> keytoPrev;
-	
+
 	// new attribute
 	ReentrantLock cacheLock;
 	ClearCacheThread cacheThread;
 
 	// expire time in millsencond
-	long expireTime = 1000; 
+	long expireTime = 1000;
 	int n = 2;
 
-    public LRUCache(int capacity) 
-    {   this.dummy = new ListNode(0, 0);
-        this.tail = dummy;
-        
-        this.capacity = capacity;
+	public LRUCache(int capacity) {
+		this.dummy = new ListNode(0, 0);
+		this.tail = dummy;
+
+		this.capacity = capacity;
 		this.keytoPrev = new HashMap<>();
-		
+
 		this.cacheLock = new ReentrantLock();
 		this.cacheThread = new ClearCacheThread(this, expireTime, n);
 		cacheThread.start();
-    }
+	}
 
-    public void moveToTail(int key){
-        ListNode prev = keytoPrev.get(key);
+	public void moveToTail(int key) {
+		ListNode prev = keytoPrev.get(key);
 		ListNode cur = prev.next;
 		cur.timestamp = System.currentTimeMillis();
-        if(tail == cur){
-            return;
-        }
-        prev.next = prev.next.next;
-        if(prev.next != null){
-            keytoPrev.put(prev.next.key, prev);
-        }
-        tail.next = cur;
-        
-        keytoPrev.put(key,tail);
-        
-        tail = cur;
-    }
-    public int get(int key) {
+		if (tail == cur) {
+			return;
+		}
+		prev.next = prev.next.next;
+		if (prev.next != null) {
+			keytoPrev.put(prev.next.key, prev);
+		}
+		tail.next = cur;
+
+		keytoPrev.put(key, tail);
+
+		tail = cur;
+	}
+
+	public int get(int key) {
 		cacheLock.lock();
-        if(!keytoPrev.containsKey(key)){
-            return -1;
-        }
+		if (!keytoPrev.containsKey(key)) {
+			return -1;
+		}
 		moveToTail(key);
 		cacheLock.unlock();
-        return tail.value;
-    }
+		return tail.value;
+	}
 
-    /*
-     * @param key: An integer
-     * @param value: An integer
-     * @return: nothing
-     */
-    public void set(int key, int value) {
-		
-		 cacheLock.lock();
-         if(keytoPrev.containsKey(key)){
-            ListNode prev = keytoPrev.get(key);
-            ListNode cur = prev.next;
-            cur.value = value;
-            
-            moveToTail(key);
-            return;
-        }
-        if(size < capacity){
-            
-            ListNode cur = new ListNode(key,value);
-            tail.next = cur;
-            keytoPrev.put(key, tail);
-            tail = cur;
-            size = keytoPrev.size();
-            return;
-        }
-        ListNode first = dummy.next;
-        keytoPrev.remove(first.key);
-        first.key = key;
-        first.value = value;
-        keytoPrev.put(key,dummy);
+	/*
+	 * @param key: An integer
+	 * 
+	 * @param value: An integer
+	 * 
+	 * @return: nothing
+	 */
+	public void set(int key, int value) {
+
+		cacheLock.lock();
+		if (keytoPrev.containsKey(key)) {
+			ListNode prev = keytoPrev.get(key);
+			ListNode cur = prev.next;
+			cur.value = value;
+
+			moveToTail(key);
+			return;
+		}
+		if (size < capacity) {
+
+			ListNode cur = new ListNode(key, value);
+			tail.next = cur;
+			keytoPrev.put(key, tail);
+			tail = cur;
+			size = keytoPrev.size();
+			return;
+		}
+		ListNode first = dummy.next;
+		keytoPrev.remove(first.key);
+		first.key = key;
+		first.value = value;
+		keytoPrev.put(key, dummy);
 		moveToTail(key);
 		cacheLock.unlock();
 	}
-	
-	public void clearCache(){
+
+	public void clearCache() {
 		// if return true, we need to clear cache
 		// otherwise we do not need clear cache
 		long currentTime = System.currentTimeMillis();
 		cacheLock.lock();
-		while(dummy.next != null){
-				ListNode node = dummy.next;
-				if(currentTime - node.timestamp > expireTime){
-					keytoPrev.remove(node.key);
-					dummy.next = dummy.next.next;
-					if(dummy.next != null){
-						keytoPrev.put(dummy.next.key, dummy);
-					}
-				} else {
-					break;
+		while (dummy.next != null) {
+			ListNode node = dummy.next;
+			if (currentTime - node.timestamp > expireTime) {
+				keytoPrev.remove(node.key);
+				dummy.next = dummy.next.next;
+				if (dummy.next != null) {
+					keytoPrev.put(dummy.next.key, dummy);
 				}
+			} else {
+				break;
+			}
 		}
 		cacheLock.unlock();
-		
+
 	}
-    public static void main(String[] args) {
+
+	public static void main(String[] args) {
 		LRUCache obj = new LRUCache(10);
 		obj.set(10, 13);
 		obj.set(3, 17);
