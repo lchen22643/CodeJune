@@ -90,9 +90,13 @@ public class LRUCache {
 
 	public int get(int key) {
 		int res = -1;
+		cacheLock.lock();
+		if(dataMap.containsKey(key)){
+			node = dataMap.get(key);
+		}
+		cacheLock.unlock();
 
-		if (dataMap.containsKey(key)) {
-			ListNode node = dataMap.get(key);
+		if (node != null) {
 			if (System.currentTimeMillis() - node.timestamp > expireTime) {
 				return res;
 			} else {
@@ -112,22 +116,15 @@ public class LRUCache {
 
 	public void set(int key, int value) {
 		ListNode node = null;
-
+        cacheLock.lock();
 		if (dataMap.containsKey(key)) {
 			node = dataMap.get(key);
 			node.updateNode(value, System.currentTimeMillis());
-			cacheLock.lock();
 			node = list.rmNode(node);
-			cacheLock.unlock();
-
 		} else {
-			cacheLock.lock();
 			node = new ListNode(key, value);
 			dataMap.put(key, node);
-			cacheLock.unlock();
-
 		}
-		cacheLock.lock();
 		list.addToTail(node);
 
 		if (dataMap.size() > this.capacity) {
