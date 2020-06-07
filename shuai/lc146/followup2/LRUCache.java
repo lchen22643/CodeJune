@@ -2,26 +2,26 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
-
 class ListNode {
-    public int key;
+	public int key;
 	public volatile int val;
 	public volatile long timestamp;
 	public boolean expire;
-    public ListNode next;
+	public ListNode next;
 	public ListNode pre;
-	
+
 	public ReentrantLock nodeLock;
 
-    public ListNode(int key, int val) {
-        this.key = key;
-        this.val = val;
-        this.next = null;
+	public ListNode(int key, int val) {
+		this.key = key;
+		this.val = val;
+		this.next = null;
 		this.pre = null;
 		this.timestamp = System.currentTimeMillis();
 		nodeLock = new ReentrantLock();
 	}
-	public void updateNode(int val, long timestamp){
+
+	public void updateNode(int val, long timestamp) {
 		this.nodeLock.lock();
 		this.val = val;
 		this.timestamp = timestamp;
@@ -31,125 +31,125 @@ class ListNode {
 }
 
 class DList {
-    ListNode head = null;
-    ListNode tail = null;
-    
-    public ListNode rmNode(ListNode node) {
-        if (node == null) {
-            return null;
-        }
-        ListNode pre = node.pre;
+	ListNode head = null;
+	ListNode tail = null;
+
+	public ListNode rmNode(ListNode node) {
+		if (node == null) {
+			return null;
+		}
+		ListNode pre = node.pre;
 		ListNode next = node.next;
-		
-        if (pre != null) {
-            pre.next = next;
-        } else {
-            head = node.next;
-        }
-        if (next != null) {
-            next.pre = pre;
-        } else {
-            tail = node.pre;
-        }
-        node.pre = null;
-        node.next = null;
-        return node;
-    }
 
-    public void addToTail(ListNode node) {
-        if (this.tail == null) {
-            this.tail = node;
-            this.head = node;
-        } else {
-            this.tail.next = node;
-            node.pre = this.tail;
-            this.tail = node;
-        }
-    }
+		if (pre != null) {
+			pre.next = next;
+		} else {
+			head = node.next;
+		}
+		if (next != null) {
+			next.pre = pre;
+		} else {
+			tail = node.pre;
+		}
+		node.pre = null;
+		node.next = null;
+		return node;
+	}
 
-    public ListNode removeHead() {
-        return rmNode(this.head);
-    }
+	public void addToTail(ListNode node) {
+		if (this.tail == null) {
+			this.tail = node;
+			this.head = node;
+		} else {
+			this.tail.next = node;
+			node.pre = this.tail;
+			this.tail = node;
+		}
+	}
+
+	public ListNode removeHead() {
+		return rmNode(this.head);
+	}
 }
 
 public class LRUCache {
-    Map<Integer, ListNode> dataMap;
+	Map<Integer, ListNode> dataMap;
 	DList list;
 	ReentrantLock cacheLock;
 	int capacity;
 
 	long expireTime = 10000;
-    public LRUCache(int capacity) {
-        dataMap = new ConcurrentHashMap<>();
-        list = new DList();
+
+	public LRUCache(int capacity) {
+		dataMap = new ConcurrentHashMap<>();
+		list = new DList();
 		this.capacity = capacity;
 		cacheLock = new ReentrantLock();
 
-    }
+	}
 
-    public int get(int key) {
+	public int get(int key) {
 		int res = -1;
-		
-        if (dataMap.containsKey(key)) {
+
+		if (dataMap.containsKey(key)) {
 			ListNode node = dataMap.get(key);
-			if(System.currentTimeMillis() - node.timestamp > expireTime){
+			if (System.currentTimeMillis() - node.timestamp > expireTime) {
 				return res;
 			} else {
 				node.updateNode(node.val, System.currentTimeMillis());
 				res = node.val;
 			}
 
-            cacheLock.lock();
-            node = list.rmNode(node);
-            list.addToTail(node);
+			cacheLock.lock();
+			node = list.rmNode(node);
+			list.addToTail(node);
 			cacheLock.unlock();
-            
-        }
-        return res;
 
-    }
+		}
+		return res;
 
-    public void set(int key, int value) {
+	}
+
+	public void set(int key, int value) {
 		ListNode node = null;
-		
-        if (dataMap.containsKey(key)) {
+
+		if (dataMap.containsKey(key)) {
 			node = dataMap.get(key);
 			node.updateNode(value, System.currentTimeMillis());
 			cacheLock.lock();
 			node = list.rmNode(node);
 			cacheLock.unlock();
 
-        } else {
+		} else {
 			cacheLock.lock();
 			node = new ListNode(key, value);
 			dataMap.put(key, node);
 			cacheLock.unlock();
 
-        }
-        cacheLock.lock();
-        list.addToTail(node);
-        
-        if (dataMap.size() > this.capacity) {
-            dataMap.remove(list.removeHead().key);
+		}
+		cacheLock.lock();
+		list.addToTail(node);
+
+		if (dataMap.size() > this.capacity) {
+			dataMap.remove(list.removeHead().key);
 		}
 		clearCache();
 		cacheLock.unlock();
 
 	}
 
-	public void clearCache(){
-		while(list.head != null){
-			if(System.currentTimeMillis() - list.head.timestamp > expireTime){
-               list.removeHead();
+	public void clearCache() {
+		while (list.head != null) {
+			if (System.currentTimeMillis() - list.head.timestamp > expireTime) {
+				list.removeHead();
 			} else {
 				break;
 			}
 		}
-		
 
 	}
 
-    public static void main(String[] args) {
+	public static void main(String[] args) {
 		LRUCache obj = new LRUCache(10);
 		obj.set(10, 13);
 		obj.set(3, 17);
@@ -262,6 +262,5 @@ public class LRUCache {
 		obj.set(11, 26);
 
 	}
-
 
 }
