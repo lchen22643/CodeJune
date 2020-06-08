@@ -90,13 +90,7 @@ public class LRUCache {
 
 	public int get(int key) {
 		int res = -1;
-		ListNode node = null;
-		cacheLock.lock();
-		if(dataMap.containsKey(key)){
-			node = dataMap.get(key);
-		}
-		cacheLock.unlock();
-
+		ListNode node = dataMap.getOrDefault(key, null);
 		if (node != null) {
 			if (System.currentTimeMillis() - node.timestamp > expireTime) {
 				return res;
