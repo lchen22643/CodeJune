@@ -90,6 +90,7 @@ public class LRUCache {
 
 	public int get(int key) {
 		int res = -1;
+		ListNode node = null;
 		cacheLock.lock();
 		if(dataMap.containsKey(key)){
 			node = dataMap.get(key);
